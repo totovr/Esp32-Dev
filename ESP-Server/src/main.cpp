@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "WiFi.h"
+#include <WiFi.h>
 #include <WiFiMulti.h>
 
 WiFiMulti WiFiMulti;
@@ -62,11 +62,26 @@ void server_raspberry() {
   }
   // This will send the request to the server
   client.print("ESP32 connected to server");
-  //read back one line from server
-  String line = client.readStringUntil('\r');
-  client.println(line);
 }
 
 void watch() {
-
+  if (client) {
+    // if client connected
+    Serial.println("New Client.");
+    // make a String to hold incoming data from the client
+    String currentLine = "";
+    while (client.connected()) {
+      // loop while the client's connected
+      if (client.available()) {
+          // if there's bytes to read from the client
+          char c = client.read();
+          // read a byte
+          Serial.println(c);
+          // print it out the serial monitor
+        }
+      }
+      // close the connection
+      client.stop();
+      Serial.println("Client Disconnected.");
+    }
 }
