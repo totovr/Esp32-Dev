@@ -8,6 +8,9 @@ WiFiClient client;
 const uint16_t port = 5204;
 const char * host = "10.31.1.100"; // ip or dns
 
+//Server variable
+WiFiServer server(80);
+
 void setup() {
     Serial.begin(115200);
     delay(10);
