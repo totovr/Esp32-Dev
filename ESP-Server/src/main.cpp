@@ -44,10 +44,10 @@ void loop() {
     // listen for incoming clients
     WiFiClient client = server.available();
     // This function connect the watch
-
+    watch();
     // This function connect to the Raspberry
     server_raspberry();
-    delay(2000);
+    delay(500);
 }
 
 void server_raspberry() {
@@ -57,11 +57,12 @@ void server_raspberry() {
   if (!client.connect(host, port)) {
           Serial.println("connection failed");
           Serial.println("wait 5 sec...");
-          delay(5000);
+          delay(1000);
           return;
   }
   // This will send the request to the server
   client.print("ESP32 connected to server");
+  delay(500);
 }
 
 void watch() {
@@ -70,6 +71,7 @@ void watch() {
     Serial.println("New Client.");
     // make a String to hold incoming data from the client
     String currentLine = "";
+    //Serial.print('\n');
     while (client.connected()) {
       // loop while the client's connected
       if (client.available()) {
@@ -78,10 +80,8 @@ void watch() {
           // read a byte
           Serial.println(c);
           // print it out the serial monitor
+          Serial.print('\n');
         }
       }
-      // close the connection
-      client.stop();
-      Serial.println("Client Disconnected.");
     }
 }
