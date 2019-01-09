@@ -41,13 +41,14 @@ void setup()
 
   if (calibrating == true)
   {
-    Serial.print("Calibrating");
+    // Serial.print("Calibrating");
 
     digitalWrite(LED, HIGH);
     // This is a calibration of the threshold
     for (int i = 0; i < samplesThresholdCalibration; i++)
     {
       sensorValue = analogRead(GSR);
+      sensorValue = map(sensorValue, 0, 4095, 0, 1023);
       sumSensorValue += sensorValue;
       delay(5);
     }
@@ -58,6 +59,7 @@ void setup()
     for (int i = 0; i < samplesThresholdCalibration; i++)
     {
       sensorValue = analogRead(GSR);
+      sensorValue = map(sensorValue, 0, 4095, 0, 1023);
       temp = threshold - sensorValue;
       delay(5);
       sumEmotionThreshold += abs(temp);
@@ -81,12 +83,11 @@ void loop()
 
     // Reading the values
     sensorValue = analogRead(GSR);
+    sensorValue = map(sensorValue, 0, 4095, 0, 1023);
     delay(5);
 
     // Difference of the threshold value and the sensor
     temp = threshold - sensorValue;
-
-    // Format of the output
 
     // Serial.print(i);
     // Serial.print(",");
@@ -95,14 +96,14 @@ void loop()
     // Serial.println(sensorValue);
     // Serial.print(",");
 
-    //Serial.print(abs(temp));
+    Serial.println(abs(temp));
     //Serial.print(",");
     //Serial.println(emotionThreshold);
 
     // Check bluetooth
-    SerialBT.print(abs(temp));
-    SerialBT.print(",");
-    SerialBT.println(emotionThreshold);
+    //SerialBT.println(abs(temp));
+    //SerialBT.print(",");
+    //SerialBT.println(emotionThreshold);
 
     // emotionThreslhold can be changed depending of the emotion that we want to measure
     if (abs(temp) > emotionThreshold)
@@ -137,6 +138,7 @@ void loop()
       for (int i = 0; i < iterations; i++)
       {
         sensorValue = analogRead(GSR);
+        sensorValue = map(sensorValue, 0, 4095, 0, 1023);
         sumSensorValue += sensorValue;
         delay(5);
       }
