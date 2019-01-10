@@ -16,12 +16,15 @@ unsigned long PulseInterval = 0;
 
 // Measure every 500 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 200;
+const unsigned long delayTime2 = 500;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
 // For the LED
 int LED = 32;
+
+// Save previous state
+int bpmPrevious = 60;
 
 void setup()
 {
@@ -86,10 +89,20 @@ void loop()
     // Serial.print("\t");
     // Serial.print(PulseInterval);
     // Serial.print("\t");
+
+    if(BPM > 220 || BPM < 59)
+    {
+      BPM = bpmPrevious;
+    }
+
     Serial.print(BPM);
     Serial.println(" BPM");
     Serial.flush();
+
+    bpmPrevious = BPM;
+
   }
+
 }
 
 // First event timer
