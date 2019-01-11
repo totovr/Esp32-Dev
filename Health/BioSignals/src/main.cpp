@@ -25,6 +25,7 @@ int UpperThreshold = 518;
 int LowerThreshold = 490;
 int reading = 0;
 float BPM = 0.0;
+int bpmInt;
 bool IgnoreReading = false;
 bool FirstPulseDetected = false;
 unsigned long FirstPulseTime = 0;
@@ -33,12 +34,22 @@ unsigned long PulseInterval = 0;
 
 // Measure every 500 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 500;
+const unsigned long delayTime2 = 2500;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
 // Save previous state
 int bpmPrevious = 60;
+int bpmIntCurrent;
+int bpmIntPrevious;
+
+// For Calories Calculator
+int CaloriesBurned(unsigned long _exerciseTime);
+int age = 26;
+int weight = 72;
+int metValue = 5; // https://sites.google.com/site/compendiumofphysicalactivities/Activity-Categories/conditioning-exercise
+unsigned long exerciseTime;
+int totalCalories;
 
 void setup()
 {
@@ -49,8 +60,26 @@ void setup()
 
 void loop()
 {
+  exerciseTime = millis();
+
+  // GSR sensor
   // GSRCalculation();
+
+  // Calculate beat pear minute
   BPMCalculation();
+  bpmIntCurrent = bpmInt;
+  if (bpmIntCurrent != bpmIntPrevious)
+  {
+    Serial.print(bpmInt);
+    Serial.println(" BPM");
+
+    // Calculate calories burned
+    totalCalories = CaloriesBurned(exerciseTime);
+    Serial.print(totalCalories);
+    Serial.println(" total calories");
+  }
+
+  bpmIntPrevious = bpmIntCurrent;
 }
 
 void GSRCalculation()
@@ -139,9 +168,10 @@ void BPMCalculation()
       BPM = bpmPrevious;
     }
 
-    Serial.println(BPM);
-    // Serial.println(" BPM");
-    Serial.flush();
+    // Cast to int
+    bpmInt = (int)BPM;
+    //Serial.println(bpmInt);
+    //Serial.flush();
 
     bpmPrevious = BPM;
   }
@@ -173,4 +203,12 @@ int myTimer2(long delayTime2, long currentMillis)
   {
     return 0;
   }
+}
+
+int CaloriesBurned(unsigned long _exerciseTime)
+{
+  // https://www.cmsfitnesscourses.co.uk/blog/53/using-mets-to-calculate-calories
+  unsigned long exerciseTimeMinutes = _exerciseTime / 60000;
+  int calories = metValue * weight / 200 * exerciseTimeMinutes;
+  return calories;
 }
