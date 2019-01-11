@@ -5,7 +5,7 @@
 // Declaration of functions
 void GSRCalculation();
 // Input PIN
-const int GSRInput = 27;
+const int GSRInput = 35;
 // Variables
 int sensorValue = 0;
 int gsr_average = 0;
@@ -18,7 +18,7 @@ int myTimer1(long delayTime, long currentMillis);
 int myTimer2(long delayTime2, long currentMillis);
 void BPMCalculation();
 // Input PIN
-const int BPMInput = 26;
+const int BPMInput = 34;
 
 // Variables
 int UpperThreshold = 518;
@@ -34,7 +34,7 @@ unsigned long PulseInterval = 0;
 
 // Measure every 500 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 2500;
+const unsigned long delayTime2 = 3000;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
@@ -63,21 +63,21 @@ void loop()
   exerciseTime = millis();
 
   // GSR sensor
-  // GSRCalculation();
+  GSRCalculation();
 
   // Calculate beat pear minute
-  BPMCalculation();
-  bpmIntCurrent = bpmInt;
-  if (bpmIntCurrent != bpmIntPrevious)
-  {
-    Serial.print(bpmInt);
-    Serial.println(" BPM");
+  // BPMCalculation();
+  // bpmIntCurrent = bpmInt;
+  // if (bpmIntCurrent != bpmIntPrevious)
+  // {
+  //   Serial.print(bpmInt);
+  //   Serial.println(" BPM");
 
-    // Calculate calories burned
-    totalCalories = CaloriesBurned(exerciseTime);
-    Serial.print(totalCalories);
-    Serial.println(" total calories");
-  }
+  //   // // Calculate calories burned
+  //   // totalCalories = CaloriesBurned(exerciseTime);
+  //   // Serial.print(totalCalories);
+  //   // Serial.println(" total calories");
+  // }
 
   bpmIntPrevious = bpmIntCurrent;
 }
@@ -89,24 +89,24 @@ void GSRCalculation()
   for (int i = 0; i < 10; i++) //Average the 10 measurements to remove the glitch
   {
     sensorValue = analogRead(GSRInput);
-    // sensorValue = map(sensorValue, 0, 4095, 0, 1023);
-    // sensorValue = sensorValue - 588;
+    sensorValue = map(sensorValue, 0, 4095, 0, 1023);
+    sensorValue = sensorValue - 140;
     sum += sensorValue;
     delay(5);
   }
   gsr_average = sum / 10;
 
   // Serial.print("GSR Average ");
-  Serial.println(gsr_average);
+  // Serial.println(gsr_average);
 
   /*
   Human Resistance = ((1024+2*Serial_Port_Reading)*10000)/(512-Serial_Port_Reading), 
   unit is ohm, Serial_Port_Reading is the value display on Serial Port(between 0~1023)
   */
 
-  // userResistence = ((1024+2*gsr_average)*10000)/(512-gsr_average);
-  // Serial.print("User resistence ");
-  // Serial.println(userResistence);
+  userResistence = ((1024+2*gsr_average)*10000)/(512-gsr_average);
+  Serial.print("User resistence ");
+  Serial.println(userResistence);
 }
 
 void BPMCalculation()
@@ -120,6 +120,7 @@ void BPMCalculation()
 
     // Raw reading of the sensor
     reading = analogRead(BPMInput);
+    // Serial.println(reading);
 
     // The ESP32 has a ADC of 12 bits so map again like if it were of 10 bits
     reading = map(reading, 0, 4095, 0, 1023);
