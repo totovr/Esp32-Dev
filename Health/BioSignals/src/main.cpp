@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <SparkFunTMP102.h>
-// #include "BluetoothSerial.h"
 
 // For GSR
 // Declaration of functions
@@ -18,8 +17,9 @@ int userResistence = 0;
 int myTimer1(long delayTime, long currentMillis);
 int myTimer2(long delayTime2, long currentMillis);
 void BPMCalculation();
+
 // Input PIN
-const int BPMInput = 4;
+const int BPMInput = 26;
 
 // Variables
 int UpperThreshold = 518;
@@ -35,7 +35,7 @@ unsigned long PulseInterval = 0;
 
 // Measure every 500 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 2700;
+const unsigned long delayTime2 = 3000;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
@@ -57,12 +57,13 @@ void CalculateTemperature();
 TMP102 sensor0(0x48); // Initialize sensor at I2C address 0x48
 float temperature;
 
-
 void setup()
 {
   Serial.begin(115200);
+
   pinMode(GSRInput, INPUT);
   pinMode(BPMInput, INPUT);
+
   // Temperature sensor setup
   sensor0.begin(); // Join I2C bus
   // set the Conversion Rate (how quickly the sensor gets a new reading)
@@ -77,20 +78,23 @@ void loop()
 {
   exerciseTime = millis();
 
-  // GSR sensor
-  // GSRCalculation();
-
   //Calculate beat pear minute
   BPMCalculation();
   bpmIntCurrent = bpmInt;
-  if (bpmIntCurrent != bpmIntPrevious)
+  if (bpmIntCurrent != bpmIntPrevious && exerciseTime > 5000)
   {
     Serial.print(bpmInt);
     Serial.println(" BPM");
-    GSRCalculation();
-    CalculateTemperature();
 
-    // // Calculate calories burned
+    GSRCalculation();
+    Serial.print("User resistence ");
+    Serial.println(userResistence);
+
+    CalculateTemperature();
+    Serial.print("Temperature: ");
+    Serial.println(temperature);
+
+    // Calculate calories burned
     // totalCalories = CaloriesBurned(exerciseTime);
     // Serial.print(totalCalories);
     // Serial.println(" total calories");
@@ -123,8 +127,6 @@ void GSRCalculation()
   */
 
   userResistence = ((1024 + 2 * gsr_average) * 10000) / (512 - gsr_average);
-  Serial.print("User resistence ");
-  Serial.println(userResistence);
 }
 
 void BPMCalculation()
@@ -138,7 +140,6 @@ void BPMCalculation()
 
     // Raw reading of the sensor
     reading = analogRead(BPMInput);
-    // Serial.println(reading);
 
     // The ESP32 has a ADC of 12 bits so map again like if it were of 10 bits
     reading = map(reading, 0, 4095, 0, 1023);
@@ -189,8 +190,6 @@ void BPMCalculation()
 
     // Cast to int
     bpmInt = (int)BPM;
-    //Serial.println(bpmInt);
-    //Serial.flush();
 
     bpmPrevious = BPM;
   }
@@ -243,8 +242,4 @@ void CalculateTemperature()
   // Place sensor in sleep mode to save power.
   // Current consumtion typically <0.5uA.
   sensor0.sleep();
-
-  // Print temperature and alarm state
-  Serial.print("Temperature: ");
-  Serial.println(temperature);
 }
