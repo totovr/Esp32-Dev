@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <SparkFunTMP102.h>
 // #include "BluetoothSerial.h"
 
 // For GSR
@@ -18,7 +19,7 @@ int myTimer1(long delayTime, long currentMillis);
 int myTimer2(long delayTime2, long currentMillis);
 void BPMCalculation();
 // Input PIN
-const int BPMInput = 34;
+const int BPMInput = 4;
 
 // Variables
 int UpperThreshold = 518;
@@ -34,7 +35,7 @@ unsigned long PulseInterval = 0;
 
 // Measure every 500 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 3000;
+const unsigned long delayTime2 = 2700;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
@@ -51,11 +52,25 @@ int metValue = 5; // https://sites.google.com/site/compendiumofphysicalactivitie
 unsigned long exerciseTime;
 int totalCalories;
 
+// For Temperature
+void CalculateTemperature();
+TMP102 sensor0(0x48); // Initialize sensor at I2C address 0x48
+float temperature;
+
+
 void setup()
 {
   Serial.begin(115200);
   pinMode(GSRInput, INPUT);
   pinMode(BPMInput, INPUT);
+  // Temperature sensor setup
+  sensor0.begin(); // Join I2C bus
+  // set the Conversion Rate (how quickly the sensor gets a new reading)
+  //0-3: 0:0.25Hz, 1:1Hz, 2:4Hz, 3:8Hz
+  sensor0.setConversionRate(3);
+  //set Extended Mode.
+  //0:12-bit Temperature(-55C to +128C) 1:13-bit Temperature(-55C to +150C)
+  sensor0.setExtendedMode(0);
 }
 
 void loop()
@@ -63,21 +78,23 @@ void loop()
   exerciseTime = millis();
 
   // GSR sensor
-  GSRCalculation();
+  // GSRCalculation();
 
-  // Calculate beat pear minute
-  // BPMCalculation();
-  // bpmIntCurrent = bpmInt;
-  // if (bpmIntCurrent != bpmIntPrevious)
-  // {
-  //   Serial.print(bpmInt);
-  //   Serial.println(" BPM");
+  //Calculate beat pear minute
+  BPMCalculation();
+  bpmIntCurrent = bpmInt;
+  if (bpmIntCurrent != bpmIntPrevious)
+  {
+    Serial.print(bpmInt);
+    Serial.println(" BPM");
+    GSRCalculation();
+    CalculateTemperature();
 
-  //   // // Calculate calories burned
-  //   // totalCalories = CaloriesBurned(exerciseTime);
-  //   // Serial.print(totalCalories);
-  //   // Serial.println(" total calories");
-  // }
+    // // Calculate calories burned
+    // totalCalories = CaloriesBurned(exerciseTime);
+    // Serial.print(totalCalories);
+    // Serial.println(" total calories");
+  }
 
   bpmIntPrevious = bpmIntCurrent;
 }
@@ -90,7 +107,8 @@ void GSRCalculation()
   {
     sensorValue = analogRead(GSRInput);
     sensorValue = map(sensorValue, 0, 4095, 0, 1023);
-    sensorValue = sensorValue - 140;
+    // Serial.println(sensorValue);
+    // sensorValue = sensorValue - 140;
     sum += sensorValue;
     delay(5);
   }
@@ -104,7 +122,7 @@ void GSRCalculation()
   unit is ohm, Serial_Port_Reading is the value display on Serial Port(between 0~1023)
   */
 
-  userResistence = ((1024+2*gsr_average)*10000)/(512-gsr_average);
+  userResistence = ((1024 + 2 * gsr_average) * 10000) / (512 - gsr_average);
   Serial.print("User resistence ");
   Serial.println(userResistence);
 }
@@ -212,4 +230,21 @@ int CaloriesBurned(unsigned long _exerciseTime)
   unsigned long exerciseTimeMinutes = _exerciseTime / 60000;
   int calories = metValue * weight / 200 * exerciseTimeMinutes;
   return calories;
+}
+
+void CalculateTemperature()
+{
+  // Turn sensor on to start temperature measurement.
+  sensor0.wakeup();
+
+  // read temperature data
+  temperature = sensor0.readTempC();
+
+  // Place sensor in sleep mode to save power.
+  // Current consumtion typically <0.5uA.
+  sensor0.sleep();
+
+  // Print temperature and alarm state
+  Serial.print("Temperature: ");
+  Serial.println(temperature);
 }
