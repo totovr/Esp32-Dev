@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <SparkFunTMP102.h>
+// #include "BluetoothSerial.h"
+
+// BluetoothSerial SerialBT;
 
 // For GSR
 // Declaration of functions
@@ -46,7 +49,6 @@ int bpmIntPrevious;
 
 // For Calories Calculator
 int CaloriesBurned(unsigned long _exerciseTime);
-int age = 26;
 int weight = 72;
 int metValue = 5; // https://sites.google.com/site/compendiumofphysicalactivities/Activity-Categories/conditioning-exercise
 unsigned long exerciseTime;
@@ -72,6 +74,8 @@ void setup()
   //set Extended Mode.
   //0:12-bit Temperature(-55C to +128C) 1:13-bit Temperature(-55C to +150C)
   sensor0.setExtendedMode(0);
+
+  // SerialBT.begin("ESP32Emotion"); //Bluetooth device name
 }
 
 void loop()
@@ -84,19 +88,24 @@ void loop()
   if (bpmIntCurrent != bpmIntPrevious && exerciseTime > 5000)
   {
     Serial.print(bpmInt);
-    Serial.println(" BPM");
+    // Serial.println(" BPM");
+
+    Serial.print(",");
 
     GSRCalculation();
-    Serial.print("User resistence ");
-    Serial.println(userResistence);
+    // Serial.print("User resistence ");
+    Serial.print(userResistence);
+
+    Serial.print(",");
 
     CalculateTemperature();
-    Serial.print("Temperature: ");
-    Serial.println(temperature);
+    // Serial.print("Temperature: ");
+    Serial.print(temperature);
 
-    // Calculate calories burned
-    // totalCalories = CaloriesBurned(exerciseTime);
-    // Serial.print(totalCalories);
+    Serial.print(",");
+
+    totalCalories = CaloriesBurned(exerciseTime);
+    Serial.println(totalCalories);
     // Serial.println(" total calories");
   }
 
@@ -111,8 +120,6 @@ void GSRCalculation()
   {
     sensorValue = analogRead(GSRInput);
     sensorValue = map(sensorValue, 0, 4095, 0, 1023);
-    // Serial.println(sensorValue);
-    // sensorValue = sensorValue - 140;
     sum += sensorValue;
     delay(5);
   }
@@ -143,6 +150,8 @@ void BPMCalculation()
 
     // The ESP32 has a ADC of 12 bits so map again like if it were of 10 bits
     reading = map(reading, 0, 4095, 0, 1023);
+
+    // SerialBT.println(reading);
 
     // Heart beat leading edge detected.
     if (reading > UpperThreshold && IgnoreReading == false)
