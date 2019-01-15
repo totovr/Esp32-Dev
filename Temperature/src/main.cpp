@@ -26,8 +26,6 @@ void setup() {
 
 void loop()
 {
-  float temperature;
-
   // Turn sensor on to start temperature measurement.
   sensor0.wakeup();
 
