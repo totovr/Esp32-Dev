@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <SparkFunTMP102.h>
-// #include "BluetoothSerial.h"
+#include "BluetoothSerial.h"
 
-// BluetoothSerial SerialBT;
+BluetoothSerial SerialBT;
 
 // For GSR
 // Declaration of functions
@@ -22,7 +22,7 @@ int myTimer2(long delayTime2, long currentMillis);
 void BPMCalculation();
 
 // Input PIN
-const int BPMInput = 26;
+const int BPMInput = 33;
 
 // Variables
 int UpperThreshold = 518;
@@ -36,9 +36,9 @@ unsigned long FirstPulseTime = 0;
 unsigned long SecondPulseTime = 0;
 unsigned long PulseInterval = 0;
 
-// Measure every 500 seconds
+// Measure every 2700 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 3000;
+const unsigned long delayTime2 = 2700;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
@@ -75,38 +75,48 @@ void setup()
   //0:12-bit Temperature(-55C to +128C) 1:13-bit Temperature(-55C to +150C)
   sensor0.setExtendedMode(0);
 
-  // SerialBT.begin("ESP32Emotion"); //Bluetooth device name
+  SerialBT.begin("ESP32Emotion"); //Bluetooth device name
 }
 
 void loop()
 {
   exerciseTime = millis();
 
-  //Calculate beat pear minute
-  BPMCalculation();
+  BPMCalculation(); //Calculate beat pear minute
+
   bpmIntCurrent = bpmInt;
   if (bpmIntCurrent != bpmIntPrevious && exerciseTime > 5000)
   {
-    Serial.print(bpmInt);
+    // Serial.print(bpmInt);
     // Serial.println(" BPM");
 
-    Serial.print(",");
+    // Serial.print(",");
 
     GSRCalculation();
     // Serial.print("User resistence ");
-    Serial.print(userResistence);
+    // Serial.print(userResistence);
 
-    Serial.print(",");
+    // Serial.print(",");
 
     CalculateTemperature();
     // Serial.print("Temperature: ");
-    Serial.print(temperature);
+    // Serial.print(temperature);
 
-    Serial.print(",");
+    // Serial.print(",");
 
     totalCalories = CaloriesBurned(exerciseTime);
-    Serial.println(totalCalories);
+    // Serial.println(totalCalories);
     // Serial.println(" total calories");
+
+    // Bluetooth
+    SerialBT.print(bpmInt);
+    SerialBT.print(",");
+    SerialBT.print(userResistence);
+    SerialBT.print(",");
+    SerialBT.print(temperature);
+    SerialBT.print(",");
+    SerialBT.println(totalCalories);
+
   }
 
   bpmIntPrevious = bpmIntCurrent;
@@ -150,8 +160,6 @@ void BPMCalculation()
 
     // The ESP32 has a ADC of 12 bits so map again like if it were of 10 bits
     reading = map(reading, 0, 4095, 0, 1023);
-
-    // SerialBT.println(reading);
 
     // Heart beat leading edge detected.
     if (reading > UpperThreshold && IgnoreReading == false)
