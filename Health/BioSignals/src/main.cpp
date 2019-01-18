@@ -1,35 +1,58 @@
 #include <Arduino.h>
 #include <SparkFunTMP102.h>
 #include "BluetoothSerial.h"
-#include "DFRobot_Heartrate.h"
+#include <driver/adc.h>
 
 BluetoothSerial SerialBT;
 
 // For GSR
 // Declaration of functions
 void GSRCalculation();
+// int GSRCalibration();
 // Input PIN
-const int GSRInput = 34;
+// const int GSRInput = 34;
 // Variables
 int sensorValue = 0;
 int gsr_average = 0;
 long sum = 0;
-int userResistence = 0;
+long userResistence = 0;
 
-int gsrPreviousReading = 580;
+int gsrPreviousReading = 520;
 int gsrCurrentReading;
 int gsrThresholdUp;
 int gsrThresholdLow;
 
 // For BPM
+// Declaration of functions
+int myTimer1(long delayTime, long currentMillis);
+int myTimer2(long delayTime2, long currentMillis);
 void BPMCalculation();
-#define heartRatePin 35
-DFRobot_Heartrate heartrate(DIGITAL_MODE); ///< ANALOG_MODE or DIGITAL_MODE
-uint8_t rateValue;
-int bpmPrevious = 60; 
-int BPM;
+
+// Input PIN
+const int BPMInput = 33;
+
+// Variables
+int UpperThreshold = 518;
+int LowerThreshold = 490;
+int reading = 0;
+float BPM = 0.0;
+int bpmInt;
+bool IgnoreReading = false;
+bool FirstPulseDetected = false;
+unsigned long FirstPulseTime = 0;
+unsigned long SecondPulseTime = 0;
+unsigned long PulseInterval = 0;
+
+// Measure every 2700 seconds
+const unsigned long delayTime = 10;
+const unsigned long delayTime2 = 2000;
+unsigned long previousMillis = 0;
+unsigned long previousMillis2 = 0;
+
+// Save previous state
+float bpmPrevious = 60;
 int bpmIntCurrent;
-int bpmIntPrevious;
+int bpmIntPrevious = 70;
 int bpmThresholdUp;
 int bpmThresholdLow;
 
@@ -49,7 +72,12 @@ void setup()
 {
   Serial.begin(115200);
 
-  pinMode(GSRInput, INPUT);
+  // GSR Setup
+  adc1_config_width(ADC_WIDTH_BIT_10);                        //Range 0-1023
+  adc1_config_channel_atten(ADC1_CHANNEL_4, ADC_ATTEN_DB_11); //ADC_ATTEN_DB_11 = 0-3,6V
+
+  // HeartSensor
+  adc1_config_channel_atten(ADC1_CHANNEL_5, ADC_ATTEN_DB_11); //ADC_ATTEN_DB_11 = 0-3,6V
 
   // Temperature sensor setup
   sensor0.begin(); // Join I2C bus
@@ -69,19 +97,32 @@ void loop()
 
   BPMCalculation(); //Calculate beat pear minute
 
-  bpmIntCurrent = BPM;
+  // SerialBT.print(bpmInt);
+  // SerialBT.print(" , ");
+
+  GSRCalculation();
+  // SerialBT.print(gsr_average);
+  // SerialBT.print(" , ");
+  // SerialBT.print(userResistence);
+
+  CalculateTemperature();
+  // SerialBT.print(" , ");
+  // SerialBT.print(temperature);
+
+  totalCalories = CaloriesBurned(exerciseTime);
+  // SerialBT.print(" , ");
+  // SerialBT.println(totalCalories);
+
+  bpmIntCurrent = bpmInt;
   bpmThresholdUp = bpmIntPrevious + 10;
   bpmThresholdLow = bpmIntPrevious - 10;
 
   if (bpmIntCurrent != bpmIntPrevious && bpmIntCurrent > bpmThresholdLow && bpmIntCurrent < bpmThresholdUp)
   {
 
-    GSRCalculation();
-    CalculateTemperature();
-    totalCalories = CaloriesBurned(exerciseTime);
-
     // Bluetooth
-    SerialBT.print(BPM);
+
+    SerialBT.print(bpmIntCurrent);
     SerialBT.print(",");
     SerialBT.print(userResistence);
     SerialBT.print(",");
@@ -100,23 +141,22 @@ void GSRCalculation()
 
   for (int i = 0; i < 10; i++) //Average the 10 measurements to remove the glitch
   {
-    sensorValue = analogRead(GSRInput);
-    sensorValue = map(sensorValue, 0, 4095, 0, 1023);
-    sensorValue = sensorValue - 194;
+    sensorValue = adc1_get_raw(ADC1_CHANNEL_4); //Read analog
     gsrCurrentReading = sensorValue;
 
     gsrThresholdUp = gsrPreviousReading + 50;
     gsrThresholdLow = gsrPreviousReading - 50;
 
-    if (gsrCurrentReading > 850 || gsrCurrentReading < gsrThresholdLow || gsrCurrentReading > gsrThresholdUp)
+    if (gsrCurrentReading > 800 || gsrCurrentReading < gsrThresholdLow || gsrCurrentReading > gsrThresholdUp)
     {
       gsrCurrentReading = gsrPreviousReading;
     }
 
-    sum += sensorValue;
+    sum += gsrCurrentReading;
     delay(5);
     gsrPreviousReading = gsrCurrentReading;
   }
+
   gsr_average = sum / 10;
 
   /*
@@ -124,35 +164,104 @@ void GSRCalculation()
   unit is ohm, Serial_Port_Reading is the value display on Serial Port(between 0~1023)
   */
 
-  int adjust = 512 - gsrCurrentReading;
+  int adjust = 512 - gsr_average;
   if (adjust == 0)
   {
     adjust = 1;
   }
 
-  userResistence = ((1024 + 2 * gsrCurrentReading) * 10000) / (adjust);
-
-  gsrPreviousReading = gsrCurrentReading;
+  userResistence = ((1024 + 2 * gsr_average) * 10000) / (adjust);
 }
 
 void BPMCalculation()
 {
-  heartrate.getValue(heartRatePin);
-  rateValue = heartrate.getRate(); ///< Get heart rate value
+  // Get current time
+  unsigned long currentMillis = millis();
 
-  if (rateValue > 220 || rateValue < 59)
+  // First event
+  if (myTimer1(delayTime, currentMillis) == 1)
   {
-    rateValue = bpmPrevious;
+
+    // Raw reading of the sensor
+    // reading = analogRead(BPMInput);
+    reading = adc1_get_raw(ADC1_CHANNEL_5); //Read analog
+
+    // The ESP32 has a ADC of 12 bits so map again like if it were of 10 bits
+    // reading = map(reading, 0, 4095, 0, 1023);
+
+    // Heart beat leading edge detected.
+    if (reading > UpperThreshold && IgnoreReading == false)
+    {
+      if (FirstPulseDetected == false)
+      {
+        FirstPulseTime = millis();
+        FirstPulseDetected = true;
+      }
+      else
+      {
+        SecondPulseTime = millis();
+        PulseInterval = SecondPulseTime - FirstPulseTime;
+        FirstPulseTime = SecondPulseTime;
+      }
+      IgnoreReading = true;
+    }
+
+    // Heart beat trailing edge detected.
+    if (reading < LowerThreshold && IgnoreReading == true)
+    {
+      IgnoreReading = false;
+    }
+
+    /*If you know the interval between heart beats, you can calculate the 
+    frequency using the formula: frequency = 1 / time. Now if you take 
+    the frequency and multiply it by 60, you should get BPM.*/
+
+    // Calculate Beats Per Minute.
+    BPM = (1.0 / PulseInterval) * 60.0 * 1000;
   }
 
-  if (rateValue)
+  // Second event
+  if (myTimer2(delayTime2, currentMillis) == 1)
   {
-    // Serial.println(rateValue);
-    BPM = rateValue;
-    
+
+    if (BPM > 220 || BPM < 59)
+    {
+      BPM = bpmPrevious;
+    }
+
+    // Cast to int
+    bpmInt = (int)BPM;
+
+    bpmPrevious = BPM;
   }
-  delay(10);
-  bpmPrevious = BPM;
+}
+
+// First event timer
+int myTimer1(long delayTime, long currentMillis)
+{
+  if (currentMillis - previousMillis >= delayTime)
+  {
+    previousMillis = currentMillis;
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+// Second event timer
+int myTimer2(long delayTime2, long currentMillis)
+{
+  if (currentMillis - previousMillis2 >= delayTime2)
+  {
+    previousMillis2 = currentMillis;
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 int CaloriesBurned(unsigned long _exerciseTime)
