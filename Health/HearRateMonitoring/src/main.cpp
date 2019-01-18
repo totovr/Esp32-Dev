@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "DFRobot_Heartrate.h"
 
-#define heartRatePin 27
+#define heartRatePin 35
 
 DFRobot_Heartrate heartrate(DIGITAL_MODE); ///< ANALOG_MODE or DIGITAL_MODE
 
@@ -14,7 +14,7 @@ void loop()
 {
   uint8_t rateValue;
   heartrate.getValue(heartRatePin); 
-  rateValue = heartrate.getRate();  ///< Get heart rate value
+  rateValue = heartrate.analogGetRate();  ///< Get heart rate value
   if (rateValue)
   {
     Serial.println(rateValue);

@@ -44,7 +44,7 @@ void loop()
   {
 
     // Raw reading of the sensor
-    reading = analogRead(27);
+    reading = analogRead(35);
 
     // The ESP32 has a ADC of 12 bits so map again like if it were of 10 bits
     reading = map(reading, 0, 4095, 0, 1023);
