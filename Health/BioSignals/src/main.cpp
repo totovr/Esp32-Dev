@@ -2,7 +2,6 @@
 #include <SparkFunTMP102.h>
 #include "BluetoothSerial.h"
 #include <driver/adc.h>
-#include "DFRobot_Heartrate.h"
 
 BluetoothSerial SerialBT;
 
@@ -45,8 +44,8 @@ unsigned long PulseInterval = 0;
 
 // Measure every 2700 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 3000;
-unsigned long previousMillis = 0;
+const unsigned long delayTime2 = 1000;
+unsigned long previousMillis = 2000;
 unsigned long previousMillis2 = 0;
 
 // Save previous state
