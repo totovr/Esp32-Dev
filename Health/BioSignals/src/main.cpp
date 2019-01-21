@@ -2,6 +2,7 @@
 #include <SparkFunTMP102.h>
 #include "BluetoothSerial.h"
 #include <driver/adc.h>
+#include "DFRobot_Heartrate.h"
 
 BluetoothSerial SerialBT;
 
@@ -45,7 +46,7 @@ unsigned long PulseInterval = 0;
 
 // Measure every 2700 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 2000;
+const unsigned long delayTime2 = 4000;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
@@ -72,8 +73,10 @@ void setup()
 {
   Serial.begin(115200);
 
+  // ADC Configuration
+  adc1_config_width(ADC_WIDTH_BIT_10); //Range 0-1023
+
   // GSR Setup
-  adc1_config_width(ADC_WIDTH_BIT_10);                        //Range 0-1023
   adc1_config_channel_atten(ADC1_CHANNEL_4, ADC_ATTEN_DB_11); //ADC_ATTEN_DB_11 = 0-3,6V
 
   // HeartSensor
@@ -116,6 +119,14 @@ void loop()
   bpmIntCurrent = bpmInt;
   bpmThresholdUp = bpmIntPrevious + 10;
   bpmThresholdLow = bpmIntPrevious - 10;
+
+  // SerialBT.print(bpmIntCurrent);
+  // SerialBT.print(" , ");
+  // SerialBT.print(bpmThresholdUp);
+  // SerialBT.print(" , ");
+  // SerialBT.print(bpmThresholdUp);
+  // SerialBT.print(" , ");
+  // SerialBT.println(bpmThresholdLow);
 
   if (bpmIntCurrent != bpmIntPrevious && bpmIntCurrent > bpmThresholdLow && bpmIntCurrent < bpmThresholdUp)
   {

@@ -121,7 +121,7 @@ uint16_t DFRobot_Heartrate::analogGetRate(void)
             if(timeFlag > 9)timeFlag=0;
         }       
         if(0 == sampleTime[9]){
-            //Serial.println("Wait for valid data !"); 
+            Serial.println("Wait for valid data !"); 
             return(0);
         }
         		
@@ -140,7 +140,7 @@ uint16_t DFRobot_Heartrate::analogGetRate(void)
             }            
         }   
 		if((Arrange[7]-Arrange[3])>150){
-            // Serial.println("Wait for valid data !");  
+            Serial.println("Wait for valid data !");  
 			return(0);
 		}	
         
@@ -186,7 +186,7 @@ uint16_t DFRobot_Heartrate::digitalGetRate(void)
             if(timeFlag > 9)timeFlag=0;
         }       
         if(0 == sampleTime[9]){
-            // Serial.println("Wait for valid data !"); 
+            Serial.println("Wait for valid data !"); 
             return(0);
         }
         		
@@ -205,7 +205,7 @@ uint16_t DFRobot_Heartrate::digitalGetRate(void)
             }            
         }   
 		if((Arrange[7]-Arrange[3])>120){
-            // Serial.println("Wait for valid data !");  
+            Serial.println("Wait for valid data !");  
 			return(0);
 		}	
         
