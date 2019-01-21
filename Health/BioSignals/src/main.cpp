@@ -9,7 +9,6 @@ BluetoothSerial SerialBT;
 // For GSR
 // Declaration of functions
 void GSRCalculation();
-// int GSRCalibration();
 // Input PIN
 // const int GSRInput = 34;
 // Variables
@@ -46,7 +45,7 @@ unsigned long PulseInterval = 0;
 
 // Measure every 2700 seconds
 const unsigned long delayTime = 10;
-const unsigned long delayTime2 = 4000;
+const unsigned long delayTime2 = 3000;
 unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
@@ -99,20 +98,17 @@ void loop()
   exerciseTime = millis();
 
   BPMCalculation(); //Calculate beat pear minute
+  GSRCalculation();
+  CalculateTemperature();
+  totalCalories = CaloriesBurned(exerciseTime);
 
   // SerialBT.print(bpmInt);
   // SerialBT.print(" , ");
-
-  GSRCalculation();
   // SerialBT.print(gsr_average);
   // SerialBT.print(" , ");
   // SerialBT.print(userResistence);
-
-  CalculateTemperature();
   // SerialBT.print(" , ");
   // SerialBT.print(temperature);
-
-  totalCalories = CaloriesBurned(exerciseTime);
   // SerialBT.print(" , ");
   // SerialBT.println(totalCalories);
 
@@ -120,20 +116,13 @@ void loop()
   bpmThresholdUp = bpmIntPrevious + 10;
   bpmThresholdLow = bpmIntPrevious - 10;
 
-  // SerialBT.print(bpmIntCurrent);
-  // SerialBT.print(" , ");
-  // SerialBT.print(bpmThresholdUp);
-  // SerialBT.print(" , ");
-  // SerialBT.print(bpmThresholdUp);
-  // SerialBT.print(" , ");
-  // SerialBT.println(bpmThresholdLow);
-
   if (bpmIntCurrent != bpmIntPrevious && bpmIntCurrent > bpmThresholdLow && bpmIntCurrent < bpmThresholdUp)
   {
+    int bpmAverage = (bpmIntCurrent + bpmIntPrevious) / 2;
 
     // Bluetooth
-
-    SerialBT.print(bpmIntCurrent);
+    // SerialBT.print(bpmIntCurrent);
+    SerialBT.print(bpmAverage);
     SerialBT.print(",");
     SerialBT.print(userResistence);
     SerialBT.print(",");
