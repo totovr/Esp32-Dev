@@ -21,10 +21,7 @@ void loop()
 
   for (int i = 0; i < 10; i++) //Average the 10 measurements to remove the glitch
   {
-    // sensorValue = analogRead(GSR);
     sensorValue = adc1_get_raw(ADC1_CHANNEL_6); //Read analog
-    // sensorValue = map(sensorValue, 0, 4095, 0, 1023);
-    // sensorValue = sensorValue - 184;
     sum += sensorValue;
     delay(5);
   }
