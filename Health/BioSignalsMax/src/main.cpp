@@ -65,30 +65,24 @@ void BPMCalculation()
       //Take average of readings
       beatAvg = 0;
       for (byte x = 0; x < RATE_SIZE; x++)
+      {
         beatAvg += rates[x];
+      }
       beatAvg /= RATE_SIZE;
-
-      // SerialBT.print("IR=");
-      // SerialBT.print(irValue);
-      // SerialBT.print(" , ");
-      // SerialBT.print("BPM=");
-      // SerialBT.print(beatsPerMinute);
-      // SerialBT.print(" , ");
     }
   }
 
-  if (beatAvg > 59 || beatAvg < 220 || irValue > 106500)
+  if (beatAvg > 59 || beatAvg < 220)
   {
     SerialBT.print("IR=");
     SerialBT.print(irValue);
-    SerialBT.print("Avg BPM=");
+    SerialBT.print(" Avg BPM=");
     SerialBT.print(beatAvg);
     SerialBT.print(" , ");
     SerialBT.print("Temp=");
     SerialBT.println(temperature);
   }
-
-  if (irValue < 106500)
+  else if (irValue < 106500)
   {
     SerialBT.println(" No finger?");
   }
