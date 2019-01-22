@@ -45,7 +45,7 @@ unsigned long PulseInterval = 0;
 // Measure every 2700 seconds
 const unsigned long delayTime = 10;
 const unsigned long delayTime2 = 1000;
-unsigned long previousMillis = 2000;
+unsigned long previousMillis = 0;
 unsigned long previousMillis2 = 0;
 
 // Save previous state
@@ -121,6 +121,7 @@ void loop()
 
     // Bluetooth
     // SerialBT.print(bpmIntCurrent);
+    // SerialBT.print(",");
     SerialBT.print(bpmAverage);
     SerialBT.print(",");
     SerialBT.print(userResistence);
