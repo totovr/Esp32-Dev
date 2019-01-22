@@ -63,6 +63,8 @@ void loop()
   Serial.print(beatsPerMinute);
   Serial.print(", Avg BPM=");
   Serial.print(beatAvg);
+  Serial.print(", Temp=");
+  Serial.print(particleSensor.readTemperature());
 
   if (irValue < 50000)
     Serial.print(" No finger?");
