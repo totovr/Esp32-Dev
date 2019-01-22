@@ -46,6 +46,8 @@ void loop()
 
 void BPMCalculation()
 {
+  // ADC Configuration
+  adc1_config_width(ADC_WIDTH_BIT_12); //Range 0-1023
   long irValue = particleSensor.getIR();
   temperature = particleSensor.readTemperature();
 
