@@ -11,7 +11,7 @@ MAX30105 particleSensor;
 // BPM calculation
 void BPMCalculation();
 
-const byte RATE_SIZE = 4; //Increase this for more averaging. 4 is good.
+const byte RATE_SIZE = 6; //Increase this for more averaging. 6 is good.
 byte rates[RATE_SIZE];    //Array of heart rates
 byte rateSpot = 0;
 long lastBeat = 0; //Time at which the last beat occurred
@@ -46,8 +46,6 @@ void loop()
 
 void BPMCalculation()
 {
-  // ADC Configuration
-  adc1_config_width(ADC_WIDTH_BIT_12); //Range 0-1023
   long irValue = particleSensor.getIR();
   temperature = particleSensor.readTemperature();
 
@@ -79,13 +77,18 @@ void BPMCalculation()
     }
   }
 
-  SerialBT.print("Avg BPM=");
-  SerialBT.print(beatAvg);
-  SerialBT.print(" , ");
-  SerialBT.print("Temp=");
-  SerialBT.println(temperature);
+  if (beatAvg > 59 || beatAvg < 220 || irValue > 106500)
+  {
+    SerialBT.print("IR=");
+    SerialBT.print(irValue);
+    SerialBT.print("Avg BPM=");
+    SerialBT.print(beatAvg);
+    SerialBT.print(" , ");
+    SerialBT.print("Temp=");
+    SerialBT.println(temperature);
+  }
 
-  if (irValue < 50000)
+  if (irValue < 106500)
   {
     SerialBT.println(" No finger?");
   }
