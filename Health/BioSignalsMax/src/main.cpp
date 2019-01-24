@@ -8,18 +8,49 @@
 BluetoothSerial SerialBT;
 MAX30105 particleSensor;
 
+// For GSR
+// Declaration of functions
+void GSRCalculation();
+// Input PIN
+// const int GSRInput = 34;
+// Variables
+int sensorValue = 0;
+int gsr_average = 0;
+long sum = 0;
+long userResistence = 0;
+
+int gsrPreviousReading = 520;
+int gsrCurrentReading;
+int gsrThresholdUp;
+int gsrThresholdLow;
+
 // BPM calculation
 void BPMCalculation();
-
+// Save previous state
+float bpmPrevious = 60;
+int bpmIntCurrent;
+int bpmIntPrevious = 70;
+int bpmThresholdUp;
+int bpmThresholdLow;
+// Variables used to calculate the BPM
 const byte RATE_SIZE = 6; //Increase this for more averaging. 6 is good.
 byte rates[RATE_SIZE];    //Array of heart rates
 byte rateSpot = 0;
 long lastBeat = 0; //Time at which the last beat occurred
 float beatsPerMinute;
+long irValue;
 int beatAvg;
+int beatPrevious;
 
 // Temperature
 float temperature = 27;
+
+// For Calories Calculator
+int CaloriesBurned(unsigned long _exerciseTime);
+int weight = 72;
+int metValue = 5; // https://sites.google.com/site/compendiumofphysicalactivities/Activity-Categories/conditioning-exercise
+unsigned long exerciseTime;
+int totalCalories;
 
 void setup()
 {
@@ -42,12 +73,34 @@ void setup()
 void loop()
 {
   BPMCalculation();
+  bpmIntCurrent = beatAvg;
+  bpmThresholdUp = bpmIntPrevious + 10;
+  bpmThresholdLow = bpmIntPrevious - 10;
+
+  if (bpmIntCurrent != bpmIntPrevious && bpmIntCurrent > bpmThresholdLow && bpmIntCurrent < bpmThresholdUp)
+  {
+    int bpmAverage = (bpmIntCurrent + bpmIntPrevious) / 2;
+    SerialBT.print("IR=");
+    SerialBT.print(irValue);
+    SerialBT.print(" , ");
+    SerialBT.print("BPM=");
+    SerialBT.print(beatsPerMinute);
+    SerialBT.print(" , ");
+    SerialBT.print(" Avg BPM=");
+    SerialBT.print(bpmAverage);
+    SerialBT.print(" , ");
+    SerialBT.print("Temp=");
+    SerialBT.println(temperature);
+  } 
+
+  bpmIntPrevious = bpmIntCurrent;
 }
 
 void BPMCalculation()
 {
-  long irValue = particleSensor.getIR();
-  temperature = particleSensor.readTemperature();
+
+  irValue = particleSensor.getIR();
+  // temperature = particleSensor.readTemperature();
 
   if (checkForBeat(irValue) == true)
   {
@@ -72,18 +125,23 @@ void BPMCalculation()
     }
   }
 
-  if (beatAvg > 59 || beatAvg < 220)
+  if (beatAvg > 220 || beatAvg < 59)
   {
-    SerialBT.print("IR=");
-    SerialBT.print(irValue);
-    SerialBT.print(" Avg BPM=");
-    SerialBT.print(beatAvg);
-    SerialBT.print(" , ");
-    SerialBT.print("Temp=");
-    SerialBT.println(temperature);
+    beatAvg = bpmPrevious;
   }
-  else if (irValue < 106500)
-  {
-    SerialBT.println(" No finger?");
-  }
+
+  // SerialBT.print("IR=");
+  // SerialBT.print(irValue);
+  // SerialBT.print(" , ");
+  // SerialBT.print("BPM=");
+  // SerialBT.print(beatsPerMinute);
+  // SerialBT.print(" , ");
+  // SerialBT.print(" Avg BPM=");
+  // SerialBT.print(beatAvg);
+  // SerialBT.print(" , ");
+  // SerialBT.print("Temp=");
+  // SerialBT.println(temperature);
+
+  bpmPrevious = beatAvg;
 }
+
