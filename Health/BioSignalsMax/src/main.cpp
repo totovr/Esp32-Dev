@@ -15,10 +15,10 @@ void GSRCalculation();
 // const int GSRInput = 34;
 // Variables
 int sensorValue = 0;
-int gsr_average = 0;
+float gsr_average = 0;
 long sum = 0;
-long userResistence = 0;
-
+float userVoltage;
+// Thresholds
 int gsrPreviousReading = 520;
 int gsrCurrentReading;
 int gsrThresholdUp;
@@ -33,7 +33,7 @@ int bpmIntPrevious = 70;
 int bpmThresholdUp;
 int bpmThresholdLow;
 // Variables used to calculate the BPM
-const byte RATE_SIZE = 6; //Increase this for more averaging. 6 is good.
+const byte RATE_SIZE = 9; //Increase this for more averaging. 6 is good.
 byte rates[RATE_SIZE];    //Array of heart rates
 byte rateSpot = 0;
 long lastBeat = 0; //Time at which the last beat occurred
@@ -57,6 +57,12 @@ void setup()
   Serial.begin(115200);
   SerialBT.begin("ESP32Emotion"); //Bluetooth device name
 
+  // ADC Configuration
+  adc1_config_width(ADC_WIDTH_BIT_12); //Range 0-4096
+
+  // GSR Setup
+  adc1_config_channel_atten(ADC1_CHANNEL_4, ADC_ATTEN_DB_11); //ADC_ATTEN_DB_11 = 0-3,6V
+
   // Initialize sensor
   if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) //Use default I2C port, 400kHz speed
   {
@@ -73,34 +79,56 @@ void setup()
 void loop()
 {
   BPMCalculation();
-  bpmIntCurrent = beatAvg;
-  bpmThresholdUp = bpmIntPrevious + 10;
-  bpmThresholdLow = bpmIntPrevious - 10;
 
-  if (bpmIntCurrent != bpmIntPrevious && bpmIntCurrent > bpmThresholdLow && bpmIntCurrent < bpmThresholdUp)
+  bpmIntCurrent = beatAvg;
+
+  if (bpmIntCurrent != bpmIntPrevious)
   {
+    GSRCalculation();
     int bpmAverage = (bpmIntCurrent + bpmIntPrevious) / 2;
-    SerialBT.print("IR=");
-    SerialBT.print(irValue);
-    SerialBT.print(" , ");
-    SerialBT.print("BPM=");
-    SerialBT.print(beatsPerMinute);
+    SerialBT.print("gsrVoltage=");
+    SerialBT.print(userVoltage);
     SerialBT.print(" , ");
     SerialBT.print(" Avg BPM=");
     SerialBT.print(bpmAverage);
     SerialBT.print(" , ");
     SerialBT.print("Temp=");
     SerialBT.println(temperature);
-  } 
+  } else{
+    //GSRCalculation();
+  }
 
   bpmIntPrevious = bpmIntCurrent;
 }
 
+void GSRCalculation()
+{
+
+  sum = 0;
+
+  for (int i = 0; i < 10; i++) //Average the 10 measurements to remove the glitch
+  {
+    sensorValue = adc1_get_raw(ADC1_CHANNEL_4); //Read analog
+    // sensorValue = analogRead(32);
+    gsrCurrentReading = sensorValue;
+
+    gsrThresholdUp = gsrPreviousReading + 50;
+    gsrThresholdLow = gsrPreviousReading - 50;
+
+    sum += gsrCurrentReading;
+    delay(5);
+    gsrPreviousReading = gsrCurrentReading;
+  }
+
+  gsr_average = sum / 10;
+
+  userVoltage = (gsr_average * 5) / 4096;
+}
 void BPMCalculation()
 {
 
   irValue = particleSensor.getIR();
-  // temperature = particleSensor.readTemperature();
+  temperature = particleSensor.readTemperature();
 
   if (checkForBeat(irValue) == true)
   {
@@ -130,18 +158,5 @@ void BPMCalculation()
     beatAvg = bpmPrevious;
   }
 
-  // SerialBT.print("IR=");
-  // SerialBT.print(irValue);
-  // SerialBT.print(" , ");
-  // SerialBT.print("BPM=");
-  // SerialBT.print(beatsPerMinute);
-  // SerialBT.print(" , ");
-  // SerialBT.print(" Avg BPM=");
-  // SerialBT.print(beatAvg);
-  // SerialBT.print(" , ");
-  // SerialBT.print("Temp=");
-  // SerialBT.println(temperature);
-
   bpmPrevious = beatAvg;
 }
-
