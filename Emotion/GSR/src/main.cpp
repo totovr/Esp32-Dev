@@ -18,8 +18,8 @@ void setup()
 
 void loop()
 {
-  while (w < 100)
-  {
+  // while (w < 100)
+  // {
     sum = 0;
 
     for (int i = 0; i < 10; i++) //Average the 10 measurements to remove the glitch
@@ -42,6 +42,6 @@ void loop()
     // Serial.print(gsr_average);
     // Serial.print(" , ");
     Serial.println(voltage);
-    w++;
-  }
+  //   w++;
+  // }
 }
