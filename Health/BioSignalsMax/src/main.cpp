@@ -88,10 +88,10 @@ void loop()
     int bpmAverage = (bpmIntCurrent + bpmIntPrevious) / 2;
     // SerialBT.print("gsrVoltage=");
     SerialBT.print(userVoltage);
-    SerialBT.print(" , ");
+    SerialBT.print(",");
     // SerialBT.print(" Avg BPM=");
     SerialBT.print(bpmAverage);
-    SerialBT.print(" , ");
+    SerialBT.print(",");
     // SerialBT.print("Temp=");
     SerialBT.println(temperature);
   } else{
