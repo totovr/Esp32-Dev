@@ -11,8 +11,6 @@ void setup()
 
 void loop()
 {
-
   SerialBT.println("Hello world");
-  SerialBT.flush();
   delay(20);
 }
