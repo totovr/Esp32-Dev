@@ -94,6 +94,7 @@ void loop()
     SerialBT.print(",");
     // SerialBT.print("Temp=");
     SerialBT.println(temperature);
+    SerialBT.flush();
   }
   else
   {
@@ -124,7 +125,7 @@ void GSRCalculation()
 
   gsr_average = sum / 10;
 
-  userVoltage = (gsr_average * 5) / 4096;
+  userVoltage = (gsr_average * 3.3) / 4096;
 }
 void BPMCalculation()
 {
