@@ -52,6 +52,12 @@ int metValue = 5; // https://sites.google.com/site/compendiumofphysicalactivitie
 unsigned long exerciseTime;
 int totalCalories;
 
+// Read incoming data
+void ReadData();
+
+// Reset function
+// void(*resetFunc)(void) = 0; // This function reset the microcontroller
+
 void setup()
 {
   Serial.begin(115200);
@@ -78,6 +84,7 @@ void setup()
 
 void loop()
 {
+
   BPMCalculation();
 
   bpmIntCurrent = beatAvg;
@@ -95,38 +102,25 @@ void loop()
     // SerialBT.print("Temp=");
     SerialBT.println(temperature);
     SerialBT.flush();
-  }
-  else
-  {
-    //GSRCalculation();
+    ReadData();
   }
 
   bpmIntPrevious = bpmIntCurrent;
 }
 
-void GSRCalculation()
+void ReadData()
 {
-
-  sum = 0;
-
-  for (int i = 0; i < 10; i++) //Average the 10 measurements to remove the glitch
-  {
-    sensorValue = adc1_get_raw(ADC1_CHANNEL_4); //Read analog
-    // sensorValue = analogRead(32);
-    gsrCurrentReading = sensorValue;
-
-    gsrThresholdUp = gsrPreviousReading + 50;
-    gsrThresholdLow = gsrPreviousReading - 50;
-
-    sum += gsrCurrentReading;
-    delay(5);
-    gsrPreviousReading = gsrCurrentReading;
+  int w;
+  SerialBT.read();
+  w = SerialBT.parseInt();
+  
+  if(w == 1) {
+    // SerialBT.end(); // Call the reset function
+    SerialBT.end();
+    ESP.restart();
   }
-
-  gsr_average = sum / 10;
-
-  userVoltage = (gsr_average * 3.3) / 4096;
 }
+
 void BPMCalculation()
 {
 
@@ -162,4 +156,28 @@ void BPMCalculation()
   }
 
   bpmPrevious = beatAvg;
+}
+
+void GSRCalculation()
+{
+
+  sum = 0;
+
+  for (int i = 0; i < 10; i++) //Average the 10 measurements to remove the glitch
+  {
+    sensorValue = adc1_get_raw(ADC1_CHANNEL_4); //Read analog
+    // sensorValue = analogRead(32);
+    gsrCurrentReading = sensorValue;
+
+    gsrThresholdUp = gsrPreviousReading + 50;
+    gsrThresholdLow = gsrPreviousReading - 50;
+
+    sum += gsrCurrentReading;
+    delay(5);
+    gsrPreviousReading = gsrCurrentReading;
+  }
+
+  gsr_average = sum / 10;
+
+  userVoltage = (gsr_average * 3.3) / 4096;
 }
